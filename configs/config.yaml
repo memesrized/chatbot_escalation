@@ -1,0 +1,52 @@
+# Escalation Decision System Configuration
+
+# Active model (can be overridden via CLI)
+active_model: gpt_oss
+
+# Context window size (number of recent messages to include)
+context_window_size: 8
+
+# Models configuration
+models:
+  openai_gpt4o:
+    provider: openai
+    model: gpt-4o
+    temperature: 0.0
+    env_var: OPENAI_API_KEY
+    
+  openai_gpt4o_mini:
+    provider: openai
+    model: gpt-4o-mini
+    temperature: 0.0
+    env_var: OPENAI_API_KEY
+    
+  anthropic_sonnet:
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    temperature: 0.0
+    env_var: ANTHROPIC_API_KEY
+    
+  gemini_flash:
+    provider: google-genai
+    model: gemini-2.0-flash-exp
+    temperature: 0.0
+    env_var: GOOGLE_API_KEY
+
+  gpt_oss:
+    provider: groq
+    model: openai/gpt-oss-120b
+    temperature: 0.0
+    env_var: GROQ_API_KEY
+    
+  local_compatible:
+    provider: openai
+    model: local-model
+    temperature: 0.0
+    env_var: CUSTOM_API_KEY
+    base_url_env: CUSTOM_BASE_URL
+
+# Support chatbot configuration
+chatbot:
+  model: gpt_oss
+  temperature: 0.7
+  max_tokens: 500
