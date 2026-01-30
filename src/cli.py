@@ -11,6 +11,7 @@ from src.config import Config
 from src.decision.base import ConversationState
 from src.decision.llm.engine import LLMEscalationClassifier
 from src.decision.llm.state import update_state
+from src.evaluation.logger import EvaluationLogger
 from src.evaluation.output import OutputFormatter
 from src.evaluation.runner import DatasetEvaluator
 from src.llm.factory import create_chat_model
@@ -154,6 +155,7 @@ class CLI:
         self,
         dataset_path: str = "data/escalation_dataset.json",
         model: str | None = None,
+        log_dir: str = "./logs/",
     ) -> None:
         """
         Run escalation analysis on dataset examples turn-by-turn.
@@ -164,9 +166,15 @@ class CLI:
         Args:
             dataset_path: Path to JSON dataset file
             model: Optional model name to override config active_model
+            log_dir: Directory to save log files (default: current directory)
         """
         model_name = self._get_model_name(model)
-        self.output.print_header(
+        
+        # Setup logging
+        logger = EvaluationLogger(log_dir, "turn_by_turn_eval")
+        output = OutputFormatter(logger)
+        
+        output.print_header(
             "ESCALATION DECISION SYSTEM - Turn-by-Turn Dataset Analysis",
             model_name,
             f"Dataset: {dataset_path}",
@@ -176,13 +184,18 @@ class CLI:
         if self.classifier is None:
             self.classifier = self._load_classifier(model)
 
-        evaluator = DatasetEvaluator(self.classifier, self.config.context_window_size)
-        evaluator.run_turn_by_turn(dataset_path)
+        evaluator = DatasetEvaluator(self.classifier, self.config.context_window_size, output)
+        
+        log_path = evaluator.run_turn_by_turn(dataset_path)
+        
+        if log_path:
+            print(f"\nEvaluation log saved to: {log_path}")
 
     def run_dataset_whole_conversation(
         self,
         dataset_path: str = "data/escalation_dataset.json",
         model: str | None = None,
+        log_dir: str = "./logs/",
     ) -> None:
         """
         Run escalation analysis on complete dataset conversations.
@@ -192,9 +205,15 @@ class CLI:
         Args:
             dataset_path: Path to JSON dataset file
             model: Optional model name to override config active_model
+            log_dir: Directory to save log files (default: current directory)
         """
         model_name = self._get_model_name(model)
-        self.output.print_header(
+        
+        # Setup logging
+        logger = EvaluationLogger(log_dir, "whole_conversation_eval")
+        output = OutputFormatter(logger)
+        
+        output.print_header(
             "ESCALATION DECISION SYSTEM - Whole Conversation Dataset Analysis",
             model_name,
             f"Dataset: {dataset_path}",
@@ -204,8 +223,12 @@ class CLI:
         if self.classifier is None:
             self.classifier = self._load_classifier(model)
 
-        evaluator = DatasetEvaluator(self.classifier, self.config.context_window_size)
-        evaluator.run_whole_conversation(dataset_path)
+        evaluator = DatasetEvaluator(self.classifier, self.config.context_window_size, output)
+        
+        log_path = evaluator.run_whole_conversation(dataset_path)
+        
+        if log_path:
+            print(f"\nEvaluation log saved to: {log_path}")
 
 
 def main() -> None:

@@ -33,6 +33,7 @@ class DatasetEvaluator:
         self,
         classifier: LLMEscalationClassifier,
         context_window_size: int,
+        output: OutputFormatter | None = None,
     ):
         """
         Initialize dataset evaluator.
@@ -40,10 +41,11 @@ class DatasetEvaluator:
         Args:
             classifier: LLM escalation classifier to use
             context_window_size: Size of rolling context window
+            output: Optional OutputFormatter instance (creates default if not provided)
         """
         self.classifier = classifier
         self.context_window_size = context_window_size
-        self.output = OutputFormatter()
+        self.output = output or OutputFormatter()
 
     def _load_dataset(self, dataset_path: str) -> list[dict]:
         """
@@ -112,12 +114,15 @@ class DatasetEvaluator:
         updated_state = update_state(state, decision)
         return decision, updated_state
 
-    def run_turn_by_turn(self, dataset_path: str) -> None:
+    def run_turn_by_turn(self, dataset_path: str) -> str:
         """
         Evaluate dataset turn-by-turn, stopping on escalation.
 
         Args:
             dataset_path: Path to dataset JSON file
+
+        Returns:
+            Path to log file if logger is configured, empty string otherwise
         """
         dataset = self._load_dataset(dataset_path)
 
@@ -139,6 +144,13 @@ class DatasetEvaluator:
             if result.expected is not None:
                 y_true.append(result.expected)
                 y_pred.append(result.predicted)
+                # Print expected vs predicted escalation turn
+                if result.expected:
+                    expected_turn = result.conversation_length
+                else:
+                    expected_turn = f"no (length {result.conversation_length})"
+                predicted_turn = result.escalation_turn if result.predicted else None
+                self.output._output(f"Expected escalation turn: {expected_turn} | Predicted turn: {predicted_turn}", also_print=True)
                 self.output.print_prediction_comparison(result.expected, result.predicted)
 
                 # Track early escalation
@@ -158,6 +170,11 @@ class DatasetEvaluator:
                 early_escalations_when_needed, false_escalations
             )
             self.output.print_early_escalation_metrics(early_metrics)
+
+        # Return log file path if logger exists
+        if hasattr(self.output, 'logger') and self.output.logger:
+            return self.output.logger.get_log_path()
+        return ""
 
     def _evaluate_turn_by_turn(
         self, example: dict, example_idx: int
@@ -192,21 +209,22 @@ class DatasetEvaluator:
             # Make decision after each message
             decision, state = self._classify_with_window(messages_so_far, state, turn)
 
-            # Display turn and decision
-            self.output.print_turn_message(turn_idx, turn, message)
-            self.output.print_escalation_analysis(turn_idx, decision, state)
+            # Don't display turn and decision details
+            # self.output.print_turn_message(turn_idx, turn, message)
+            # self.output.print_escalation_analysis(turn_idx, decision, state)
 
             final_decision = decision
 
             # Stop if escalation triggered
             if decision.escalate_now:
-                self.output.print_escalation_triggered(turn_idx)
+                # self.output.print_escalation_triggered(turn_idx)
                 escalated = True
                 escalation_turn = turn_idx
                 break
 
-        if not escalated:
-            self.output.print_no_escalation()
+        # Don't print no escalation message
+        # if not escalated:
+        #     self.output.print_no_escalation()
 
         expected = self._get_expected_escalation(example)
         predicted = final_decision.escalate_now if final_decision else False
@@ -220,12 +238,15 @@ class DatasetEvaluator:
             conversation_length=conversation_length,
         )
 
-    def run_whole_conversation(self, dataset_path: str) -> None:
+    def run_whole_conversation(self, dataset_path: str) -> str:
         """
         Evaluate dataset on complete conversations.
 
         Args:
             dataset_path: Path to dataset JSON file
+
+        Returns:
+            Path to log file if logger is configured, empty string otherwise
         """
         dataset = self._load_dataset(dataset_path)
 
@@ -251,6 +272,11 @@ class DatasetEvaluator:
         if y_true:
             metrics = EscalationMetrics.calculate_metrics(y_true, y_pred)
             self.output.print_classification_metrics(metrics)
+
+        # Return log file path if logger exists
+        if hasattr(self.output, 'logger') and self.output.logger:
+            return self.output.logger.get_log_path()
+        return ""
 
     def _evaluate_whole_conversation(
         self, example: dict, example_idx: int
@@ -280,9 +306,9 @@ class DatasetEvaluator:
         # Make decision
         decision = self.classifier.decide(messages, state, turn)
 
-        # Display conversation and decision
-        self.output.print_conversation_snippet(messages)
-        self.output.print_escalation_analysis(example_idx, decision, state)
+        # Don't display conversation and decision details
+        # self.output.print_conversation_snippet(messages)
+        # self.output.print_escalation_analysis(example_idx, decision, state)
 
         expected = self._get_expected_escalation(example)
 
