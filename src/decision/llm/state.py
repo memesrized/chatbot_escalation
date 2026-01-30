@@ -1,15 +1,24 @@
 """State management for conversation tracking."""
 
-from src.decision.base import ConversationState
+from dataclasses import dataclass
+
 from src.decision.llm.schema import (
-    EscalationDecision,
     EscalationDecisionAfterUser,
     EscalationDecisionAfterAssistant,
 )
 
 
+@dataclass
+class ConversationState:
+    """State tracked across conversation turns."""
+
+    failed_attempts_total: int = 0
+    unresolved_turns: int = 0
+
+
 def update_state(
-    state: ConversationState, decision: EscalationDecision
+    state: ConversationState,
+    decision: EscalationDecisionAfterUser | EscalationDecisionAfterAssistant,
 ) -> ConversationState:
     """
     Update conversation state based on escalation decision.

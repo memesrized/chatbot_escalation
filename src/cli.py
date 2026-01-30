@@ -12,7 +12,7 @@ from src.config import Config
 from src.decision.base import ConversationState
 from src.decision.llm.engine import LLMEscalationClassifier
 from src.decision.llm.schema import (
-    EscalationDecision,
+    EscalationDecisionBase,
     EscalationDecisionAfterAssistant,
     EscalationDecisionAfterUser,
 )
@@ -40,12 +40,13 @@ class CLI:
         escalation_model = create_chat_model(self.config, model)
         return LLMEscalationClassifier(escalation_model)
 
-    def _classify_conversation(
+    # combined this to reduce code duplication, if needed can split again
+    def _classify_conversation_and_update_state(
         self,
         messages: list[AnyMessage],
         state: ConversationState,
         turn: Literal["user", "assistant"],
-    ) -> tuple[EscalationDecision, ConversationState]:
+    ) -> tuple[EscalationDecisionBase, ConversationState]:
         """Classify escalation decision for a conversation."""
         # Get rolling window for escalation decision
         window_size = self.config.context_window_size
@@ -110,7 +111,7 @@ class CLI:
                 turn = "user"
 
             # Make escalation decision
-            decision, state = self._classify_conversation(messages, state, turn=turn)
+            decision, state = self._classify_conversation_and_update_state(messages, state, turn=turn)
             self._print_escalation_analysis(turn_n, decision, state)
 
             # Check for escalation
@@ -169,12 +170,6 @@ class CLI:
             print(f"Example ID: {example['conversation_id']}")
             print(f"{'=' * 70}")
 
-            # Convert to Message objects
-            # all_messages = [
-            #     Message(role=msg["role"], content=msg["message"])
-            #     for msg in example["conversation_history"]
-            # ]
-
             conversation_length = len(example["conversation_history"])
 
             # Initialize state
@@ -197,7 +192,7 @@ class CLI:
                 messages_so_far.append(message)
 
                 # Make decision after each message
-                decision, state = self._classify_conversation(
+                decision, state = self._classify_conversation_and_update_state(
                     messages_so_far, state, turn
                 )
 

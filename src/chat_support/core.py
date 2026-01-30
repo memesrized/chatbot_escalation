@@ -1,7 +1,7 @@
 """Support chatbot implementation."""
 
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import SystemMessage
 
 from src.chat_support.prompt import SUPPORT_CHATBOT_PROMPT
 from langchain.messages import AnyMessage

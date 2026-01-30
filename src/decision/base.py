@@ -1,18 +1,11 @@
 """Base class for escalation decision classifiers."""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 
-from src.decision.llm.schema import EscalationDecision
+from src.decision.llm.schema import EscalationDecisionBase
+from src.decision.llm.state import ConversationState
 
 from langchain.messages import AnyMessage
-
-@dataclass
-class ConversationState:
-    """State tracked across conversation turns."""
-
-    failed_attempts_total: int = 0
-    unresolved_turns: int = 0
 
 
 class BaseEscalationClassifier(ABC):
@@ -21,7 +14,7 @@ class BaseEscalationClassifier(ABC):
     @abstractmethod
     def decide(
         self, messages: list[AnyMessage], state: ConversationState, **kwargs
-    ) -> EscalationDecision:
+    ) -> EscalationDecisionBase:
         """
         Decide whether to escalate based on recent messages and state.
 

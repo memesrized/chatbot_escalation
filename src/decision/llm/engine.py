@@ -3,19 +3,16 @@
 from typing_extensions import Literal
 from langchain_core.language_models.chat_models import BaseChatModel
 
-from src.decision.base import (
-    BaseEscalationClassifier,
-    ConversationState,
-)
+from src.decision.base import BaseEscalationClassifier
 from src.decision.llm.prompt import (
     ESCALATION_DECISION_PROMPT_AFTER_USER,
     ESCALATION_DECISION_PROMPT_AFTER_ASSISTANT,
 )
 from src.decision.llm.schema import (
-    EscalationDecision,
     EscalationDecisionAfterUser,
     EscalationDecisionAfterAssistant,
 )
+from src.decision.llm.state import ConversationState
 from src.decision.utils import format_conversation
 from langchain.messages import AnyMessage
 
@@ -31,15 +28,19 @@ class LLMEscalationClassifier(BaseEscalationClassifier):
             model: LangChain chat model for structured output
         """
         self.model = model
-        self.model_after_user = model.with_structured_output(EscalationDecisionAfterUser)
-        self.model_after_assistant = model.with_structured_output(EscalationDecisionAfterAssistant)
+        self.model_after_user = model.with_structured_output(
+            EscalationDecisionAfterUser
+        )
+        self.model_after_assistant = model.with_structured_output(
+            EscalationDecisionAfterAssistant
+        )
 
     def decide(
         self,
         messages: list[AnyMessage],
         state: ConversationState,
         turn: Literal["user", "assistant"],
-    ) -> EscalationDecision:
+    ) -> EscalationDecisionAfterAssistant | EscalationDecisionAfterUser:
         """
         Decide whether to escalate based on recent messages and state.
 
@@ -97,13 +98,14 @@ class LLMEscalationClassifier(BaseEscalationClassifier):
     ) -> str:
         """Build the complete prompt for escalation decision."""
         conversation = format_conversation(messages)
-        
+
         # Use appropriate prompt based on whose turn it is
         prompt_template = (
-            ESCALATION_DECISION_PROMPT_AFTER_USER if turn == "user"
+            ESCALATION_DECISION_PROMPT_AFTER_USER
+            if turn == "user"
             else ESCALATION_DECISION_PROMPT_AFTER_ASSISTANT
         )
-        
+
         return prompt_template.format(
             failed_attempts_total=state.failed_attempts_total,
             unresolved_turns=state.unresolved_turns,
