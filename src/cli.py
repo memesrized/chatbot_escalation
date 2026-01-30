@@ -5,13 +5,19 @@ from typing import Literal
 
 import fire
 from dotenv import load_dotenv
+from langchain.messages import AIMessage, AnyMessage, HumanMessage
 
 from src.chat_support import SupportChatbot
 from src.config import Config
-from src.decision.base import ConversationState, Message
+from src.decision.base import ConversationState
 from src.decision.llm.engine import LLMEscalationClassifier
-from src.decision.llm.schema import EscalationDecision
+from src.decision.llm.schema import (
+    EscalationDecision,
+    EscalationDecisionAfterAssistant,
+    EscalationDecisionAfterUser,
+)
 from src.decision.llm.state import update_state
+from src.decision.utils import get_role_from_message
 from src.llm.factory import create_chat_model
 
 
@@ -33,17 +39,18 @@ class CLI:
         """Load the LLM-based escalation classifier."""
         escalation_model = create_chat_model(self.config, model)
         return LLMEscalationClassifier(escalation_model)
-    
+
     def _classify_conversation(
         self,
-        messages: list[Message],
+        messages: list[AnyMessage],
         state: ConversationState,
+        turn: Literal["user", "assistant"],
     ) -> tuple[EscalationDecision, ConversationState]:
         """Classify escalation decision for a conversation."""
         # Get rolling window for escalation decision
         window_size = self.config.context_window_size
         recent_messages = messages[-window_size:]
-        decision = self.classifier.decide(recent_messages, state)
+        decision = self.classifier.decide(recent_messages, state, turn=turn)
         state = update_state(state, decision)
         return decision, state
 
@@ -71,7 +78,7 @@ class CLI:
         chatbot = SupportChatbot(chatbot_model)
 
         # Initialize state
-        messages: list[Message] = []
+        messages: list[AnyMessage] = []
         state = ConversationState()
 
         turn_n = 0
@@ -90,20 +97,20 @@ class CLI:
                     continue
 
                 # Add user message
-                messages.append(Message(role="user", content=user_input))
+                messages.append(HumanMessage(content=user_input))
 
                 turn_n += 1
                 turn = "assistant"
             else:
                 # Generate chatbot response
                 response = chatbot.generate_response(messages)
-                messages.append(Message(role="assistant", content=response))
+                messages.append(AIMessage(content=response))
 
                 print(f"\nAssistant: {response}\n")
                 turn = "user"
 
             # Make escalation decision
-            decision, state = self._classify_conversation(messages, state)
+            decision, state = self._classify_conversation(messages, state, turn=turn)
             self._print_escalation_analysis(turn_n, decision, state)
 
             # Check for escalation
@@ -122,7 +129,7 @@ class CLI:
     ) -> None:
         """
         Run escalation analysis on dataset examples turn-by-turn.
-        
+
         Simulates chat behavior by evaluating escalation after each message,
         stopping if escalation is triggered.
 
@@ -148,9 +155,11 @@ class CLI:
         # Track predictions for metrics
         y_true = []
         y_pred = []
-        
+
         # Track early escalation metrics
-        early_escalations_when_needed = []  # length - escalation_turn when expected=true
+        early_escalations_when_needed = (
+            []
+        )  # length - escalation_turn when expected=true
         false_escalations = []  # length - escalation_turn when expected=false
 
         # Process each example
@@ -161,12 +170,12 @@ class CLI:
             print(f"{'=' * 70}")
 
             # Convert to Message objects
-            all_messages = [
-                Message(role=msg["role"], content=msg["message"])
-                for msg in example["conversation_history"]
-            ]
-            
-            conversation_length = len(all_messages)
+            # all_messages = [
+            #     Message(role=msg["role"], content=msg["message"])
+            #     for msg in example["conversation_history"]
+            # ]
+
+            conversation_length = len(example["conversation_history"])
 
             # Initialize state
             state = ConversationState()
@@ -176,24 +185,34 @@ class CLI:
             final_decision = None
 
             # Process turn by turn
-            for turn_idx, message in enumerate(all_messages, 1):
+            for turn_idx, message in enumerate(example["conversation_history"], 1):
+                # Determine whose turn it is based on the last message
+                turn = message["role"]
+
+                message: HumanMessage | AIMessage = (
+                    HumanMessage(content=message["message"])
+                    if message["role"] == "user"
+                    else AIMessage(content=message["message"])
+                )
                 messages_so_far.append(message)
-                
+
                 # Make decision after each message
-                decision, state = self._classify_conversation(messages_so_far, state)
-                
+                decision, state = self._classify_conversation(
+                    messages_so_far, state, turn
+                )
+
                 # Print message and decision
-                role = message.role.upper()
+                role = turn.upper()
                 content_preview = (
-                    message.content[:100] + "..." 
-                    if len(message.content) > 100 
+                    message.content[:100] + "..."
+                    if len(message.content) > 100
                     else message.content
                 )
                 print(f"\nTurn {turn_idx} - {role}: {content_preview}")
                 self._print_escalation_analysis(turn_idx, decision, state)
-                
+
                 final_decision = decision
-                
+
                 # Stop if escalation triggered
                 if decision.escalate_now:
                     print(f"\n🚨 Escalation triggered at turn {turn_idx}")
@@ -216,7 +235,7 @@ class CLI:
                     f"\nExpected: {expected} | "
                     f"Predicted: {final_decision.escalate_now} {match}"
                 )
-                
+
                 # Track early escalation metrics
                 if escalation_turn is not None:
                     turns_early = conversation_length - escalation_turn
@@ -229,8 +248,7 @@ class CLI:
         if y_true:
             self._print_metrics(y_true, y_pred)
             self._print_early_escalation_metrics(
-                early_escalations_when_needed, 
-                false_escalations
+                early_escalations_when_needed, false_escalations
             )
 
     def run_dataset_whole_conversation(
@@ -240,7 +258,7 @@ class CLI:
     ) -> None:
         """
         Run escalation analysis on complete dataset conversations.
-        
+
         Evaluates escalation only at the end of the full conversation.
 
         Args:
@@ -276,7 +294,11 @@ class CLI:
 
             # Convert to Message objects
             messages = [
-                Message(role=msg["role"], content=msg["message"])
+                (
+                    HumanMessage(content=msg["message"])
+                    if msg["role"] == "user"
+                    else AIMessage(content=msg["message"])
+                )
                 for msg in example["conversation_history"]
             ]
 
@@ -286,13 +308,16 @@ class CLI:
                 unresolved_turns=example.get("unresolved_turns", 0),
             )
 
+            # Determine whose turn it is based on the last message
+            turn = example["conversation_history"][-1]["role"]
+
             # Make decision
-            decision = self.classifier.decide(messages, state)
+            decision = self.classifier.decide(messages, state, turn)
 
             # Print conversation
             print("\nConversation:")
             for msg in messages[-4:]:  # Show last 4 messages
-                role = msg.role.upper()
+                role = get_role_from_message(msg)
                 content_preview = (
                     msg.content[:100] + "..." if len(msg.content) > 100 else msg.content
                 )
@@ -322,12 +347,17 @@ class CLI:
         self, idx: int, decision, state: ConversationState
     ) -> None:
         """Print escalation decision analysis."""
+
         print(f"\n--- Escalation Analysis (ID {idx}) ---")
         print(f"Escalate Now: {decision.escalate_now}")
         print(f"Reason Codes: {', '.join(decision.reason_codes)}")
-        print(f"Failed Attempt: {decision.failed_attempt}")
-        print(f"Unresolved: {decision.unresolved}")
-        print(f"Frustration: {decision.frustration}")
+
+        # Print conditional fields based on schema type
+        if isinstance(decision, EscalationDecisionAfterAssistant):
+            print(f"Failed Attempt: {decision.failed_attempt}")
+        elif isinstance(decision, EscalationDecisionAfterUser):
+            print(f"Unresolved: {decision.unresolved}")
+            print(f"Frustration: {decision.frustration}")
         print(f"\nState Counters:")
         print(f"  Failed Attempts Total: {state.failed_attempts_total}")
         print(f"  Unresolved Turns: {state.unresolved_turns}")
@@ -393,21 +423,24 @@ class CLI:
         Print metrics about early escalation timing.
 
         Args:
-            early_escalations_when_needed: List of (length - escalation_turn) 
+            early_escalations_when_needed: List of (length - escalation_turn)
                 when escalation was correctly needed
-            false_escalations: List of (length - escalation_turn) 
+            false_escalations: List of (length - escalation_turn)
                 when escalation was incorrectly triggered
         """
         print("\n" + "=" * 70)
         print("EARLY ESCALATION METRICS")
         print("=" * 70)
-        
+
         if early_escalations_when_needed:
-            avg_early = sum(early_escalations_when_needed) / len(early_escalations_when_needed)
+            avg_early = sum(early_escalations_when_needed) / len(
+                early_escalations_when_needed
+            )
             sorted_early = sorted(early_escalations_when_needed)
             n = len(sorted_early)
             median_early = (
-                sorted_early[n // 2] if n % 2 == 1
+                sorted_early[n // 2]
+                if n % 2 == 1
                 else (sorted_early[n // 2 - 1] + sorted_early[n // 2]) / 2
             )
             print(f"\nWhen escalation WAS needed (True Positives):")
@@ -417,13 +450,14 @@ class CLI:
             print(f"  (how many turns early we escalated)")
         else:
             print(f"\nWhen escalation WAS needed (True Positives): No cases")
-        
+
         if false_escalations:
             avg_false = sum(false_escalations) / len(false_escalations)
             sorted_false = sorted(false_escalations)
             n = len(sorted_false)
             median_false = (
-                sorted_false[n // 2] if n % 2 == 1
+                sorted_false[n // 2]
+                if n % 2 == 1
                 else (sorted_false[n // 2 - 1] + sorted_false[n // 2]) / 2
             )
             print(f"\nWhen escalation was NOT needed (False Positives):")
@@ -433,7 +467,7 @@ class CLI:
             print(f"  (at what point in conversation we incorrectly escalated)")
         else:
             print(f"\nWhen escalation was NOT needed (False Positives): No cases")
-        
+
         print("=" * 70)
         print()
 

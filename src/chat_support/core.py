@@ -4,7 +4,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.chat_support.prompt import SUPPORT_CHATBOT_PROMPT
-from src.decision.base import Message
+from langchain.messages import AnyMessage
 
 
 class SupportChatbot:
@@ -20,7 +20,7 @@ class SupportChatbot:
         self.model = model
         self.system_message = SystemMessage(content=SUPPORT_CHATBOT_PROMPT)
 
-    def generate_response(self, messages: list[Message]) -> str:
+    def generate_response(self, messages: list[AnyMessage]) -> str:
         """
         Generate a response to the user's message.
 
@@ -31,13 +31,5 @@ class SupportChatbot:
             Assistant's response text
         """
         # Convert to LangChain message format
-        langchain_messages = [self.system_message]
-
-        for msg in messages:
-            if msg.role == "user":
-                langchain_messages.append(HumanMessage(content=msg.content))
-            elif msg.role == "assistant":
-                langchain_messages.append(AIMessage(content=msg.content))
-
-        response = self.model.invoke(langchain_messages)
+        response = self.model.invoke([self.system_message] + messages)
         return response.content

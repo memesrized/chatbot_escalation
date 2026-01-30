@@ -5,14 +5,7 @@ from dataclasses import dataclass
 
 from src.decision.llm.schema import EscalationDecision
 
-
-@dataclass
-class Message:
-    """A single message in the conversation."""
-
-    role: str  # "user" or "assistant"
-    content: str
-
+from langchain.messages import AnyMessage
 
 @dataclass
 class ConversationState:
@@ -27,7 +20,7 @@ class BaseEscalationClassifier(ABC):
 
     @abstractmethod
     def decide(
-        self, messages: list[Message], state: ConversationState, **kwargs
+        self, messages: list[AnyMessage], state: ConversationState, **kwargs
     ) -> EscalationDecision:
         """
         Decide whether to escalate based on recent messages and state.

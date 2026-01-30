@@ -3,7 +3,7 @@
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models.chat_models import BaseChatModel
 
-from src.config.load import Config, ModelConfig
+from src.config.load import Config
 
 
 def create_chat_model(
