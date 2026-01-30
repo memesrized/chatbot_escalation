@@ -17,6 +17,9 @@ class ModelConfig:
     temperature: float
     env_var: str
     base_url_env: str | None = None
+    max_tokens: int | None = None
+    timeout: float | None = None
+    max_retries: int | None = None
 
 
 @dataclass

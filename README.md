@@ -18,7 +18,7 @@ A turn-by-turn system that intelligently decides when to escalate a customer sup
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/memesrized/chatbot_escalation.git
 cd chatbot_escalation
 ```
 
@@ -46,7 +46,7 @@ python -m src.cli chat
 Use a specific model:
 
 ```bash
-python -m src.cli chat --model=anthropic_sonnet
+python -m src.cli chat --model=gpt_oss
 ```
 
 #### Dataset Analysis

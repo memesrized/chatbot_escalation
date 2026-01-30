@@ -4,7 +4,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from src.chat_support.core import SupportChatbot
-from src.config.load_config import Config
+from src.config.load import Config
 from src.decision.base import ConversationState, Message
 from src.decision.llm.engine import LLMEscalationClassifier
 from src.decision.llm.state import update_state

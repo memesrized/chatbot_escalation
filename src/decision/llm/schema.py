@@ -1,32 +1,27 @@
 """Schema definitions for escalation decision output."""
 
-from enum import Enum
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
 
-class EscalationReason(str, Enum):
-    """Reason codes indicating escalation is needed."""
+EscalationReason = Literal[
+    "USER_REQUESTED_HUMAN",
+    "CHURN_RISK",
+    "REPEATED_FAILURE",
+    "ASSISTANT_IRRELEVANT_OR_INCOMPLETE",
+    "INSTRUCTIONS_DID_NOT_WORK",
+    "URGENT_OR_HIGH_STAKES",
+    "CAPABILITY_OR_POLICY_BLOCK",
+]
 
-    USER_REQUESTED_HUMAN = "USER_REQUESTED_HUMAN"
-    CHURN_RISK = "CHURN_RISK"
-    REPEATED_FAILURE = "REPEATED_FAILURE"
-    ASSISTANT_IRRELEVANT_OR_INCOMPLETE = "ASSISTANT_IRRELEVANT_OR_INCOMPLETE"
-    INSTRUCTIONS_DID_NOT_WORK = "INSTRUCTIONS_DID_NOT_WORK"
-    URGENT_OR_HIGH_STAKES = "URGENT_OR_HIGH_STAKES"
-    CAPABILITY_OR_POLICY_BLOCK = "CAPABILITY_OR_POLICY_BLOCK"
-
-
-class NonEscalationReason(str, Enum):
-    """Reason codes indicating escalation is not needed."""
-
-    HOW_TO_SOLVABLE = "HOW_TO_SOLVABLE"
-    RESOLVED_CONFIRMED = "RESOLVED_CONFIRMED"
-    SMALL_TALK_OR_GREETING = "SMALL_TALK_OR_GREETING"
-    TROUBLESHOOTING_IN_PROGRESS = "TROUBLESHOOTING_IN_PROGRESS"
-    NEED_MORE_INFO = "NEED_MORE_INFO"
-
+NonEscalationReason = Literal[
+    "HOW_TO_SOLVABLE",
+    "RESOLVED_CONFIRMED",
+    "SMALL_TALK_OR_GREETING",
+    "TROUBLESHOOTING_IN_PROGRESS",
+    "NEED_MORE_INFO",
+]
 
 FrustrationLevel = Literal["none", "mild", "high"]
 
@@ -56,16 +51,29 @@ class EscalationDecision(BaseModel):
         )
     )
 
+    # TODO: test if this works with prompt caching
+    # not sure if this description goes in the beginning of the prompt
+    # so we may need to move it to the prompt template instead
+    # and acually the same goes for the other fields too
     reason_codes: list[EscalationReason | NonEscalationReason] = Field(
         description=(
             "One or more reason codes explaining the escalation decision. "
-            "Use escalation codes (USER_REQUESTED_HUMAN, CHURN_RISK, "
-            "REPEATED_FAILURE, ASSISTANT_IRRELEVANT_OR_INCOMPLETE, "
-            "INSTRUCTIONS_DID_NOT_WORK, URGENT_OR_HIGH_STAKES, "
-            "CAPABILITY_OR_POLICY_BLOCK) when escalation is needed. "
-            "Use non-escalation codes (HOW_TO_SOLVABLE, RESOLVED_CONFIRMED, "
-            "SMALL_TALK_OR_GREETING, TROUBLESHOOTING_IN_PROGRESS, "
-            "NEED_MORE_INFO) when escalation is not needed."
+            "\n\n"
+            "ESCALATION REASONS (use when escalation is needed):\n"
+            "- USER_REQUESTED_HUMAN: User explicitly asks to escalate or speak to a human representative.\n"
+            "- CHURN_RISK: User shows strong frustration or threatens to leave the service.\n"
+            "- REPEATED_FAILURE: The assistant keeps failing to make progress, repeating itself, or the conversation is stuck.\n"
+            "- ASSISTANT_IRRELEVANT_OR_INCOMPLETE: The assistant's response is irrelevant, lacks needed info, or does not answer the user's actual question.\n"
+            "- INSTRUCTIONS_DID_NOT_WORK: The user followed the provided steps, but the problem still persists.\n"
+            "- URGENT_OR_HIGH_STAKES: The case is urgent or high-stakes (especially money-related issues like missing funds) and remains unresolved.\n"
+            "- CAPABILITY_OR_POLICY_BLOCK: The assistant cannot perform the required action due to capability or policy constraints, and human intervention is needed.\n"
+            "\n"
+            "NON-ESCALATION REASONS (use when escalation is not needed):\n"
+            "- HOW_TO_SOLVABLE: The request is a straightforward how-to and the assistant can provide clear, actionable instructions.\n"
+            "- RESOLVED_CONFIRMED: The user confirms the problem is solved or says they do not need more help.\n"
+            "- SMALL_TALK_OR_GREETING: There is no support request (only greeting / small talk).\n"
+            "- TROUBLESHOOTING_IN_PROGRESS: Troubleshooting is ongoing and progressing, without explicit escalation request or strong frustration.\n"
+            "- NEED_MORE_INFO: The assistant asks reasonable clarifying questions to proceed, and the user is cooperating."
         )
     )
 

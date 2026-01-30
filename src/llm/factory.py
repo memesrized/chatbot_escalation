@@ -3,7 +3,7 @@
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models.chat_models import BaseChatModel
 
-from src.config.load_config import Config, ModelConfig
+from src.config.load import Config, ModelConfig
 
 
 def create_chat_model(
@@ -26,6 +26,16 @@ def create_chat_model(
     model_kwargs = {
         "temperature": model_config.temperature,
     }
+
+    # Add optional model configuration parameters
+    if model_config.max_tokens is not None:
+        model_kwargs["max_tokens"] = model_config.max_tokens
+    
+    if model_config.timeout is not None:
+        model_kwargs["timeout"] = model_config.timeout
+    
+    if model_config.max_retries is not None:
+        model_kwargs["max_retries"] = model_config.max_retries
 
     # Add base_url for custom endpoints
     if base_url:

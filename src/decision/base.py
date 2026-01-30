@@ -27,9 +27,7 @@ class BaseEscalationClassifier(ABC):
 
     @abstractmethod
     def decide(
-        self,
-        messages: list[Message],
-        state: ConversationState,
+        self, messages: list[Message], state: ConversationState, **kwargs
     ) -> EscalationDecision:
         """
         Decide whether to escalate based on recent messages and state.
