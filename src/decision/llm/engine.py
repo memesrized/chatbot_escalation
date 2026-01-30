@@ -29,10 +29,10 @@ class LLMEscalationClassifier(BaseEscalationClassifier):
         """
         self.model = model
         self.model_after_user = model.with_structured_output(
-            EscalationDecisionAfterUser
+            EscalationDecisionAfterUser, method="json_schema"
         )
         self.model_after_assistant = model.with_structured_output(
-            EscalationDecisionAfterAssistant
+            EscalationDecisionAfterAssistant, method="json_schema"
         )
 
     def decide(
