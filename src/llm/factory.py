@@ -6,9 +6,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from src.config.load import Config
 
 
-def create_chat_model(
-    config: Config, model_name: str | None = None
-) -> BaseChatModel:
+def create_chat_model(config: Config, model_name: str | None = None) -> BaseChatModel:
     """
     Create a LangChain chat model from configuration.
 
@@ -30,10 +28,10 @@ def create_chat_model(
     # Add optional model configuration parameters
     if model_config.max_tokens is not None:
         model_kwargs["max_tokens"] = model_config.max_tokens
-    
+
     if model_config.timeout is not None:
         model_kwargs["timeout"] = model_config.timeout
-    
+
     if model_config.max_retries is not None:
         model_kwargs["max_retries"] = model_config.max_retries
 

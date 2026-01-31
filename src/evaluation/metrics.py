@@ -15,7 +15,12 @@ class ConfusionMatrix:
     @property
     def total(self) -> int:
         """Total number of predictions."""
-        return self.true_positives + self.true_negatives + self.false_positives + self.false_negatives
+        return (
+            self.true_positives
+            + self.true_negatives
+            + self.false_positives
+            + self.false_negatives
+        )
 
     @property
     def correct(self) -> int:
@@ -141,9 +146,7 @@ class EscalationMetrics:
         """
         # True positive metrics
         tp_count = len(early_escalations_when_needed)
-        tp_avg = (
-            sum(early_escalations_when_needed) / tp_count if tp_count > 0 else 0.0
-        )
+        tp_avg = sum(early_escalations_when_needed) / tp_count if tp_count > 0 else 0.0
         tp_median = EscalationMetrics._calculate_median(early_escalations_when_needed)
 
         # False positive metrics

@@ -60,7 +60,9 @@ class DatasetEvaluator:
         with open(dataset_path) as f:
             return json.load(f)
 
-    def _convert_to_messages(self, conversation_history: list[dict]) -> list[AnyMessage]:
+    def _convert_to_messages(
+        self, conversation_history: list[dict]
+    ) -> list[AnyMessage]:
         """
         Convert conversation history to Message objects.
 
@@ -150,8 +152,13 @@ class DatasetEvaluator:
                 else:
                     expected_turn = f"no (length {result.conversation_length})"
                 predicted_turn = result.escalation_turn if result.predicted else None
-                self.output._output(f"Expected escalation turn: {expected_turn} | Predicted turn: {predicted_turn}", also_print=True)
-                self.output.print_prediction_comparison(result.expected, result.predicted)
+                self.output._output(
+                    f"Expected escalation turn: {expected_turn} | Predicted turn: {predicted_turn}",
+                    also_print=True,
+                )
+                self.output.print_prediction_comparison(
+                    result.expected, result.predicted
+                )
 
                 # Track early escalation
                 if result.escalation_turn is not None:
@@ -172,7 +179,7 @@ class DatasetEvaluator:
             self.output.print_early_escalation_metrics(early_metrics)
 
         # Return log file path if logger exists
-        if hasattr(self.output, 'logger') and self.output.logger:
+        if hasattr(self.output, "logger") and self.output.logger:
             return self.output.logger.get_log_path()
         return ""
 
@@ -266,7 +273,9 @@ class DatasetEvaluator:
             if result.expected is not None:
                 y_true.append(result.expected)
                 y_pred.append(result.predicted)
-                self.output.print_prediction_comparison(result.expected, result.predicted)
+                self.output.print_prediction_comparison(
+                    result.expected, result.predicted
+                )
 
         # Print metrics
         if y_true:
@@ -274,7 +283,7 @@ class DatasetEvaluator:
             self.output.print_classification_metrics(metrics)
 
         # Return log file path if logger exists
-        if hasattr(self.output, 'logger') and self.output.logger:
+        if hasattr(self.output, "logger") and self.output.logger:
             return self.output.logger.get_log_path()
         return ""
 
@@ -317,6 +326,8 @@ class DatasetEvaluator:
             expected=expected,
             predicted=decision.escalate_now,
             escalated=decision.escalate_now,
-            escalation_turn=len(example["conversation_history"]) if decision.escalate_now else None,
+            escalation_turn=(
+                len(example["conversation_history"]) if decision.escalate_now else None
+            ),
             conversation_length=len(example["conversation_history"]),
         )

@@ -70,9 +70,7 @@ class Config:
         """Get API key from environment variable."""
         api_key = os.getenv(model_config.env_var)
         if not api_key:
-            raise ValueError(
-                f"Environment variable '{model_config.env_var}' not set"
-            )
+            raise ValueError(f"Environment variable '{model_config.env_var}' not set")
         return api_key
 
     def get_base_url(self, model_config: ModelConfig) -> str | None:

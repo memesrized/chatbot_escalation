@@ -61,9 +61,7 @@ class OutputFormatter:
 
     def print_chat_header(self, model_name: str) -> None:
         """Print header for interactive chat session."""
-        self.print_header(
-            "ESCALATION DECISION SYSTEM - Interactive Chat", model_name
-        )
+        self.print_header("ESCALATION DECISION SYSTEM - Interactive Chat", model_name)
         self._output("Type 'quit' or 'exit' to end the conversation")
         self._output("=" * 70)
         self._output("")
@@ -174,7 +172,9 @@ class OutputFormatter:
             predicted: Predicted escalation value
         """
         match = "✓" if predicted == expected else "✗"
-        self._output(f"\nExpected: {expected} | Predicted: {predicted} {match}", also_print=True)
+        self._output(
+            f"\nExpected: {expected} | Predicted: {predicted} {match}", also_print=True
+        )
         self._output(f"{'=' * 70}", also_print=True)
 
     def print_classification_metrics(self, metrics: ClassificationMetrics) -> None:
@@ -200,7 +200,10 @@ class OutputFormatter:
         self._output(f"  False Positives (FP): {cm.false_positives}", also_print=True)
         self._output(f"  False Negatives (FN): {cm.false_negatives}", also_print=True)
         self._output("", also_print=True)
-        self._output(f"Accuracy:  {metrics.accuracy:.3f} ({metrics.accuracy * 100:.1f}%)", also_print=True)
+        self._output(
+            f"Accuracy:  {metrics.accuracy:.3f} ({metrics.accuracy * 100:.1f}%)",
+            also_print=True,
+        )
         self._output(f"Precision: {metrics.precision:.3f}", also_print=True)
         self._output(f"Recall:    {metrics.recall:.3f}", also_print=True)
         self._output(f"F1 Score:  {metrics.f1_score:.3f}", also_print=True)
@@ -219,22 +222,47 @@ class OutputFormatter:
         self._output("=" * 70, also_print=True)
 
         if metrics.true_positive_count > 0:
-            self._output(f"\nWhen escalation WAS needed (True Positives):", also_print=True)
+            self._output(
+                f"\nWhen escalation WAS needed (True Positives):", also_print=True
+            )
             self._output(f"  Count: {metrics.true_positive_count}", also_print=True)
-            self._output(f"  Average turns before end: {metrics.true_positive_avg_turns_early:.1f}", also_print=True)
-            self._output(f"  Median turns before end: {metrics.true_positive_median_turns_early:.1f}", also_print=True)
+            self._output(
+                f"  Average turns before end: {metrics.true_positive_avg_turns_early:.1f}",
+                also_print=True,
+            )
+            self._output(
+                f"  Median turns before end: {metrics.true_positive_median_turns_early:.1f}",
+                also_print=True,
+            )
             self._output(f"  (how many turns early we escalated)", also_print=True)
         else:
-            self._output(f"\nWhen escalation WAS needed (True Positives): No cases", also_print=True)
+            self._output(
+                f"\nWhen escalation WAS needed (True Positives): No cases",
+                also_print=True,
+            )
 
         if metrics.false_positive_count > 0:
-            self._output(f"\nWhen escalation was NOT needed (False Positives):", also_print=True)
+            self._output(
+                f"\nWhen escalation was NOT needed (False Positives):", also_print=True
+            )
             self._output(f"  Count: {metrics.false_positive_count}", also_print=True)
-            self._output(f"  Average turns before end: {metrics.false_positive_avg_turns_early:.1f}", also_print=True)
-            self._output(f"  Median turns before end: {metrics.false_positive_median_turns_early:.1f}", also_print=True)
-            self._output(f"  (at what point in conversation we incorrectly escalated)", also_print=True)
+            self._output(
+                f"  Average turns before end: {metrics.false_positive_avg_turns_early:.1f}",
+                also_print=True,
+            )
+            self._output(
+                f"  Median turns before end: {metrics.false_positive_median_turns_early:.1f}",
+                also_print=True,
+            )
+            self._output(
+                f"  (at what point in conversation we incorrectly escalated)",
+                also_print=True,
+            )
         else:
-            self._output(f"\nWhen escalation was NOT needed (False Positives): No cases", also_print=True)
+            self._output(
+                f"\nWhen escalation was NOT needed (False Positives): No cases",
+                also_print=True,
+            )
 
         self._output("=" * 70, also_print=True)
         self._output("", also_print=True)

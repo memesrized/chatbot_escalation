@@ -4,7 +4,6 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-
 # User-based reason codes (when last message is from user)
 UserEscalationReason = Literal[
     "USER_REQUESTED_HUMAN",

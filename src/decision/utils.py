@@ -1,6 +1,7 @@
 import json
 from langchain.messages import AnyMessage, HumanMessage, AIMessage, SystemMessage
 
+
 # TODO: replace with proper role handlig in the code itself
 def get_role_from_message(message: AnyMessage) -> str:
     """Get the role of a message."""
@@ -12,6 +13,7 @@ def get_role_from_message(message: AnyMessage) -> str:
         return "system"
     else:
         return "unknown"
+
 
 def format_conversation(messages: list[AnyMessage]) -> str:
     """Format messages for the prompt."""

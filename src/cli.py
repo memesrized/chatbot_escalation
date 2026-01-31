@@ -110,9 +110,7 @@ class CLI:
         messages.append(HumanMessage(content=user_input))
         return True
 
-    def _handle_assistant_turn(
-        self, messages: list, chatbot: SupportChatbot
-    ) -> None:
+    def _handle_assistant_turn(self, messages: list, chatbot: SupportChatbot) -> None:
         """
         Handle assistant response turn.
 
@@ -169,11 +167,11 @@ class CLI:
             log_dir: Directory to save log files (default: current directory)
         """
         model_name = self._get_model_name(model)
-        
+
         # Setup logging
         logger = EvaluationLogger(log_dir, "turn_by_turn_eval")
         output = OutputFormatter(logger)
-        
+
         output.print_header(
             "ESCALATION DECISION SYSTEM - Turn-by-Turn Dataset Analysis",
             model_name,
@@ -184,10 +182,12 @@ class CLI:
         if self.classifier is None:
             self.classifier = self._load_classifier(model)
 
-        evaluator = DatasetEvaluator(self.classifier, self.config.context_window_size, output)
-        
+        evaluator = DatasetEvaluator(
+            self.classifier, self.config.context_window_size, output
+        )
+
         log_path = evaluator.run_turn_by_turn(dataset_path)
-        
+
         if log_path:
             print(f"\nEvaluation log saved to: {log_path}")
 
@@ -208,11 +208,11 @@ class CLI:
             log_dir: Directory to save log files (default: current directory)
         """
         model_name = self._get_model_name(model)
-        
+
         # Setup logging
         logger = EvaluationLogger(log_dir, "whole_conversation_eval")
         output = OutputFormatter(logger)
-        
+
         output.print_header(
             "ESCALATION DECISION SYSTEM - Whole Conversation Dataset Analysis",
             model_name,
@@ -223,10 +223,12 @@ class CLI:
         if self.classifier is None:
             self.classifier = self._load_classifier(model)
 
-        evaluator = DatasetEvaluator(self.classifier, self.config.context_window_size, output)
-        
+        evaluator = DatasetEvaluator(
+            self.classifier, self.config.context_window_size, output
+        )
+
         log_path = evaluator.run_whole_conversation(dataset_path)
-        
+
         if log_path:
             print(f"\nEvaluation log saved to: {log_path}")
 
