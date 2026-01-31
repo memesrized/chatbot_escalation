@@ -18,9 +18,9 @@ For transparency, I used GitHub Copilot to speed up implementation, but all desi
 - [TECH_REQUIREMENTS.md](./docs/TECH_REQUIREMENTS.md)
 
 ### Self-review docs and helpers
-- [Original task description](./docs/operational/ORIGINAL_TASK_DESCRIPTION.md)
-- [Project evaluation](./docs/operational/PROJECT_EVALUATION.md)
-- [Simple charts generation](./docs/operational/SYSTEM_FLOW.py)
+- [Original task description](./docs/operational/ORIGINAL_TASK_DESCRIPTION.md) - initial project requirements
+- [Project evaluation](./docs/operational/PROJECT_EVALUATION.md) - LLM review against evaluation criteria to cover gaps if any
+- [Simple charts generation](./docs/operational/SYSTEM_FLOW.py) - initial mermaid diagram and some others (that were not used, but this doc is just for transparency)
 
 ## Features
 
