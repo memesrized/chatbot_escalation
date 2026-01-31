@@ -1,6 +1,26 @@
 # Chatbot Escalation Decision System
 
-A turn-by-turn system that intelligently decides when to escalate a customer support conversation to a human agent. The system uses LLM-based classification with deterministic state tracking to monitor conversation quality and user satisfaction.
+A turn-by-turn system that decides when to escalate a customer support conversation to a human agent. The system uses LLM-based classification with deterministic state tracking to monitor conversation quality and user satisfaction.
+
+This project is a take-home prototype built in a time-boxed manner, focusing on clear design, modular architecture, and ease of understanding.
+
+For transparency, I used GitHub Copilot to speed up implementation, but all design decisions, code structure, and documentation were created and iteratively refined by me.
+
+## Documentation
+
+### Project Overview
+- [Solution Overview](./docs/Solution_overview.md) - More thorough explanation of how the system works
+- [Design choices](./docs/Design_choices.md)
+
+### LLM supporting documentation
+- [AGENTS.md](./docs/agents/AGENTS.md)
+- [PROJECT.md](./docs/PROJECT.md)
+- [TECH_REQUIREMENTS.md](./docs/TECH_REQUIREMENTS.md)
+
+### Self-review docs and helpers
+- [Original task description](./docs/operational/ORIGINAL_TASK_DESCRIPTION.md)
+- [Project evaluation](./docs/operational/PROJECT_EVALUATION.md)
+- [Simple charts generation](./docs/operational/SYSTEM_FLOW.py)
 
 ## Features
 
@@ -9,7 +29,6 @@ A turn-by-turn system that intelligently decides when to escalate a customer sup
 - **Rolling Context Window**: Analyzes recent conversation history to make informed decisions
 - **Multi-Model Support**: Easy switching between OpenAI, Anthropic, Google, and custom endpoints
 - **Interactive CLI**: Chat interface with real-time escalation monitoring
-- **Streamlit UI**: Web-based demo with visual escalation analytics
 - **Modular Architecture**: Clean interfaces for swapping classifiers (LLM, ML, rules-based)
 
 ## Quick Start
@@ -33,6 +52,8 @@ cp .env.example .env
 # Edit .env and add your API keys
 ```
 
+4. Configure model settings in `configs/config.yaml` as needed.
+
 ### Running the System
 
 #### Interactive Chat (CLI)
@@ -51,18 +72,16 @@ python -m src.cli chat --model=gpt_oss
 
 #### Dataset Analysis
 
-Run escalation analysis on the provided dataset:
+Run turn-by-turn escalation analysis on the provided dataset:
 
 ```bash
 python -m src.cli run_dataset
 ```
 
-#### Streamlit UI
-
-Launch the web interface:
+Run evaluation on complete conversations (evaluating only at the end):
 
 ```bash
-streamlit run src/ui_streamlit.py
+python -m src.cli run_dataset_whole_conversation
 ```
 
 ## Configuration
@@ -103,32 +122,42 @@ context_window_size: 8
 ```
 src/
 ├── config/
-│   └── load_config.py        # Configuration loader
+│   └── load.py                # Configuration loader
 ├── llm/
 │   └── factory.py             # LLM factory for model creation
 ├── decision/
 │   ├── base.py                # Base classifier interface
+│   ├── utils.py               # Formatting utilities
 │   └── llm/
 │       ├── schema.py          # Structured output schema
 │       ├── engine.py          # LLM-based classifier
 │       ├── state.py           # State management
 │       └── prompt.py          # Prompt templates
+├── evaluation/
+│   ├── logger.py              # Performance logging
+│   ├── metrics.py             # Evaluation metrics
+│   ├── output.py              # CLI output formatting
+│   └── runner.py              # Dataset evaluation logic
 ├── chat_support/
 │   ├── core.py                # Support chatbot
 │   └── prompt.py              # Chatbot prompts
-├── cli.py                     # CLI interface
-└── ui_streamlit.py            # Streamlit UI
+└── cli.py                     # CLI interface
 ```
 
 ### Decision Schema
 
-The escalation classifier returns a structured decision with:
+The escalation classifier returns turn-specific structured decisions:
 
+**Common Fields:**
 - `escalate_now` (bool): Whether to escalate immediately
 - `reason_codes` (list): Explanation codes (see below)
-- `failed_attempt` (bool): Whether assistant response was inadequate
+
+**After User Turn:**
 - `unresolved` (bool): Whether user's issue remains unresolved
-- `frustration` (enum): User frustration level (none/mild/high)
+- `frustration` (enum): User frustration level (`none`, `mild`, `high`)
+
+**After Assistant Turn:**
+- `failed_attempt` (bool): Whether assistant response was inadequate (vague, irrelevant, or unhelpful)
 
 ### Escalation Reason Codes
 
@@ -192,22 +221,3 @@ models:
     temperature: 0.0
     env_var: MY_API_KEY
 ```
-
-## Future Improvements
-
-- [ ] Add evidence turn IDs for traceability
-- [ ] Calibrate threshold policies with larger dataset
-- [ ] Add deterministic overrides for specific reason codes
-- [ ] Improve multi-issue handling
-- [ ] Enhanced emotion/sentiment signals
-- [ ] Batch evaluation metrics
-
-## License
-
-See [LICENSE](LICENSE) file for details.
-
-## Documentation
-
-- [Project Overview](md/PROJECT.md)
-- [Technical Requirements](md/TECH_REQUIREMENTS.md)
-- [Development Rules](md/AGENTS.md)
