@@ -30,6 +30,8 @@ For transparency, I used GitHub Copilot to speed up implementation, but all desi
 - **Multi-Model Support**: Easy switching between OpenAI, Anthropic, Google, and custom endpoints
 - **Interactive CLI**: Chat interface with real-time escalation monitoring
 - **Modular Architecture**: Clean interfaces for swapping classifiers (LLM, ML, rules-based)
+- **Evaluation Mode**: Run turn-by-turn or whole conversation evaluations on the dataset
+- **Evaluation Logging**: Timestamped logs saved to `logs/` directory for all evaluation runs
 
 ## Quick Start
 
@@ -71,6 +73,8 @@ python -m src.cli chat --model=gpt_oss
 ```
 
 #### Dataset Analysis
+
+Data is expected in `data/escalation_dataset.json`.
 
 Run turn-by-turn escalation analysis on the provided dataset:
 

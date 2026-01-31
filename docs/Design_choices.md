@@ -191,3 +191,11 @@
     - it's pricier, but will definitely improve robustness
 - add set code linters / formatters / pre-commit hooks
     - to ensure code quality and consistency
+- test alternative conversation formats to reduce token count
+    - current: indented JSON (high tokens, good performance)
+    - candidates: YAML (only as alternative to indented JSON), compact JSON (should be really good, but doesn't work well for some reason), custom format
+    - need to benchmark impact on both cost and model accuracy
+- investigate prompt caching behavior with Pydantic schemas
+    - test if field descriptions in structured output schemas are cached
+    - determine optimal placement of instructions (schema vs prompt template)
+    - may need to move some descriptions to prompt for better caching
