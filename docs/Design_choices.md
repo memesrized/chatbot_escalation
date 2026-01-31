@@ -189,3 +189,5 @@
     - e.g. majority voting over multiple model outputs
     - or weighted voting based on model confidence
     - it's pricier, but will definitely improve robustness
+- add set code linters / formatters / pre-commit hooks
+    - to ensure code quality and consistency

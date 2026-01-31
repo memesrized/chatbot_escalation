@@ -5,7 +5,6 @@
    - Public APIs must have docstrings
    - Functions must be focused and small
    - Follow existing patterns exactly
-   - Line length: 88 chars maximum
 
 2. Code Style
     - PEP 8 naming (snake_case for functions/variables)
